@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Route, Switch, useHistory } from "react-router-dom";
 import Header from "./Header";
 import Main from "./Main";
 import Footer from "./Footer";
@@ -9,6 +10,11 @@ import { CurrentUserContext } from "../contexts/CurrentUserContext";
 import EditProfilePopup from "./EditProfilePopup";
 import EditAvatarPopup from "./EditAvatarPopup";
 import AddPlacePopup from "./AddPlacePopup";
+import Login from "./Login";
+import * as auth from "../utils/auth.js";
+import ProtectedRoute from "./ProtectedRoute";
+import Register from "./Register";
+import InfoTooltip from "./InfoTooltip";
 
 function App() {
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
@@ -17,6 +23,11 @@ function App() {
   const [selectedCard, setSelectedCard] = useState({});
   const [currentUser, setCurrentUser] = useState({});
   const [cards, setCards] = useState([]);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const history = useHistory();
+  const [isReg, setIsReg] = useState(false);
+  const [isInfoPopupOpen, setInfoPopupOpen] = useState(false);
 
   const handleEditAvatarClick = () => {
     setIsEditAvatarPopupOpen(true);
@@ -42,8 +53,55 @@ function App() {
     setIsEditAvatarPopupOpen(false);
     setIsEditProfilePopupOpen(false);
     setIsAddPlacePopupOpen(false);
+    setInfoPopupOpen(false);
     setSelectedCard({ ...selectedCard, isOpened: false });
   }
+
+  useEffect(() => {
+    handleTokenCheck();
+    if (loggedIn) {
+      Promise.all([api.getProfile(), api.getInitialCards()])
+        .then(([userData, cardData]) => {
+          setCurrentUser(userData);
+          setCards(cardData);
+        })
+        .catch((err) => console.log(`Ошибка ${err}`))
+        .finally(() => {});
+    }
+  }, [loggedIn]);
+
+  const isOpen =
+    isEditAvatarPopupOpen ||
+    isEditProfilePopupOpen ||
+    isAddPlacePopupOpen ||
+    selectedCard ||
+    isInfoPopupOpen;
+
+    useEffect(() => {
+      function closeByEscape(event) {
+        if (event.key === 'Escape') {
+          closeAllPopups();
+        }
+      }
+      if (isOpen) {
+        document.addEventListener('keydown', closeByEscape);
+        return () => {
+          document.removeEventListener('keydown', closeByEscape);
+        }
+      }
+    }, [isOpen]);
+  
+    useEffect(() => {
+      if (!isOpen) return;
+      function handleOverley(event) {
+        if (event.target.classList.contains('popup_open') || event.target.classList.contains('popup__close')) {
+          closeAllPopups();
+        }
+      };
+      document.addEventListener("mousedown", handleOverley);
+      return () => document.removeEventListener("mousedown", handleOverley);
+    }, [isOpen]);
+  
 
   useEffect(() => {
     api
@@ -116,20 +174,98 @@ function App() {
       .finally(() => {});
   };
 
+
+
+  function handleLogin() {
+    setLoggedIn(true);
+  }
+  function handleLoginSubmit(email, password) {
+    auth
+      .authorize(email, password)
+      .then((data) => {
+        localStorage.setItem("jwt", data.token);
+        setEmail(email);
+        handleLogin();
+        history.push("/");
+      })
+      .catch((err) => {
+        setInfoPopupOpen(true);
+        console.log(`Ошибка входа ${err}`);
+        setIsReg(false);
+      })
+      .finally(() => {});
+  }
+
+  function handleRegistrSubmit(email, password) {
+    auth
+      .register(email, password)
+      .then((res) => {
+        if (res) {
+          setInfoPopupOpen(true);
+          setIsReg(true);
+          history.push("/sign-in");
+        } else {
+          setInfoPopupOpen(true);
+          setIsReg(false);
+          console.log("else");
+        }
+      })
+      .catch((err) => {
+        setInfoPopupOpen(true);
+        console.log(`Ошибка входа ${err}`);
+        setIsReg(false);
+      });
+  }
+
+  function handleExit() {
+    localStorage.removeItem("jwt");
+    setLoggedIn(false);
+    history.push("/sign-in");
+  }
+
+  function handleTokenCheck() {
+    const jwt = localStorage.getItem("jwt");
+    if (jwt) {
+      auth.checkToken(jwt).then((res) => {
+        handleLogin();
+        history.push("/");
+        setEmail(res.data.email);
+      });
+    }
+  }
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <body className="page">
-        <Header />
-        <Main
-          onEditAvatar={handleEditAvatarClick}
-          onEditProfile={handleEditProfileClick}
-          onAddPlace={handleAddPlaceClick}
-          onCardClick={handleCardClick}
-          onCardLike={handleCardLike}
-          cards={cards}
-          onCardDelete={handleCardDelete}
-        />
-        <Footer />
+        <Header email={email} onExit={handleExit} />
+        <Switch>
+          <ProtectedRoute
+            exact
+            path="/"
+            loggedIn={loggedIn}
+            component={Main}
+            onEditAvatar={handleEditAvatarClick}
+            onEditProfile={handleEditProfileClick}
+            onAddPlace={handleAddPlaceClick}
+            onCardClick={handleCardClick}
+            onCardLike={handleCardLike}
+            cards={cards}
+            onCardDelete={handleCardDelete}
+          />
+          <Route path="/sign-in">
+            <Login handleLogin={handleLogin} onSubmit={handleLoginSubmit} />
+          </Route>
+
+          <Route path="/sign-up">
+            <Register
+              handleLogin={handleLogin}
+              onSubmit={handleRegistrSubmit}
+            />
+          </Route>
+        </Switch>
+        <InfoTooltip isOPen={isInfoPopupOpen} isReg={isReg} />
+
+        {loggedIn && <Footer />}
         <EditProfilePopup
           isOpen={isEditProfilePopupOpen}
           onClose={closeAllPopups}
