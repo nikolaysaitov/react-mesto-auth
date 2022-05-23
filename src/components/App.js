@@ -282,7 +282,6 @@ function App() {
           onClose={closeAllPopups}
           onAddPlace={handleAddPlaceSubmit}
         />
-
         {/* попап вы уверены? */}
         <PopupWithForm
           name="formDelete"
