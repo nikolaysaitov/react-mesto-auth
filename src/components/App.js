@@ -232,6 +232,7 @@ function App() {
   }
 
   return (
+    
     <div className="page">
       <CurrentUserContext.Provider value={currentUser}>
         <Header email={email} onExit={handleExit} />
@@ -298,6 +299,7 @@ function App() {
         <ImagePopup selectedCard={selectedCard} onClose={closeAllPopups} />
       </CurrentUserContext.Provider>
     </div>
+   
   );
 }
 
