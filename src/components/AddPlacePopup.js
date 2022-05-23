@@ -55,6 +55,7 @@ function AddPlacePopup({ isOpen, onClose, onAddPlace }) {
         placeholder="Ссылка на картинку"
         required
         onChange={handleLinkChange}
+        value={link}
       />
       <span className="url-input-error popup__error"></span>
     </PopupWithForm>

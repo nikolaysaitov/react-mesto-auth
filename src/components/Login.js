@@ -12,7 +12,7 @@ function Login(props) {
   function handleChangePassword(e) {
     setPassword(e.target.value);
   }
-  
+
   function handleSubmit(e) {
     e.preventDefault();
     props.onSubmit(email, password);
@@ -46,11 +46,7 @@ function Login(props) {
           maxLength="15"
         />
         <span className="popup__text-error password-input-error"></span>
-        <button
-          type="submit"
-          onSubmit={handleSubmit}
-          className="authorization__button"
-        >
+        <button type="submit" className="authorization__button">
           Войти
         </button>
       </form>

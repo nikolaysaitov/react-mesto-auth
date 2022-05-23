@@ -65,8 +65,7 @@ function App() {
           setCurrentUser(userData);
           setCards(cardData);
         })
-        .catch((err) => console.log(`Ошибка ${err}`))
-        .finally(() => {});
+        .catch((err) => console.log(`Ошибка ${err}`));
     }
   }, [loggedIn]);
 
@@ -77,31 +76,33 @@ function App() {
     selectedCard ||
     isInfoPopupOpen;
 
-    useEffect(() => {
-      function closeByEscape(event) {
-        if (event.key === 'Escape') {
-          closeAllPopups();
-        }
+  useEffect(() => {
+    function closeByEscape(event) {
+      if (event.key === "Escape") {
+        closeAllPopups();
       }
-      if (isOpen) {
-        document.addEventListener('keydown', closeByEscape);
-        return () => {
-          document.removeEventListener('keydown', closeByEscape);
-        }
-      }
-    }, [isOpen]);
-  
-    useEffect(() => {
-      if (!isOpen) return;
-      function handleOverley(event) {
-        if (event.target.classList.contains('popup_open') || event.target.classList.contains('popup__close')) {
-          closeAllPopups();
-        }
+    }
+    if (isOpen) {
+      document.addEventListener("keydown", closeByEscape);
+      return () => {
+        document.removeEventListener("keydown", closeByEscape);
       };
-      document.addEventListener("mousedown", handleOverley);
-      return () => document.removeEventListener("mousedown", handleOverley);
-    }, [isOpen]);
-  
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleOverley(event) {
+      if (
+        event.target.classList.contains("popup_open") ||
+        event.target.classList.contains("popup__close")
+      ) {
+        closeAllPopups();
+      }
+    }
+    document.addEventListener("mousedown", handleOverley);
+    return () => document.removeEventListener("mousedown", handleOverley);
+  }, [isOpen]);
 
   useEffect(() => {
     api
@@ -139,8 +140,7 @@ function App() {
         setCards((cards) => cards.filter((c) => c._id !== card._id));
         closeAllPopups();
       })
-      .catch((err) => console.log(`Ошибка ${err}`))
-      .finally(() => {});
+      .catch((err) => console.log(`Ошибка ${err}`));
   };
 
   const handleUpdateUser = (name, about) => {
@@ -150,8 +150,7 @@ function App() {
         setCurrentUser(item);
         closeAllPopups();
       })
-      .catch((err) => console.log(`Ошибка ${err}`))
-      .finally(() => {});
+      .catch((err) => console.log(`Ошибка ${err}`));
   };
   const handleUpdateAvatar = (avatar) => {
     api
@@ -160,8 +159,7 @@ function App() {
         setCurrentUser(item);
         closeAllPopups();
       })
-      .catch((err) => console.log(`Ошибка ${err}`))
-      .finally(() => {});
+      .catch((err) => console.log(`Ошибка ${err}`));
   };
   const handleAddPlaceSubmit = (name, link) => {
     api
@@ -170,11 +168,8 @@ function App() {
         setCards([newCard, ...cards]);
         closeAllPopups();
       })
-      .catch((err) => console.log(`Ошибка ${err}`))
-      .finally(() => {});
+      .catch((err) => console.log(`Ошибка ${err}`));
   };
-
-
 
   function handleLogin() {
     setLoggedIn(true);
@@ -192,8 +187,7 @@ function App() {
         setInfoPopupOpen(true);
         console.log(`Ошибка входа ${err}`);
         setIsReg(false);
-      })
-      .finally(() => {});
+      });
   }
 
   function handleRegistrSubmit(email, password) {
@@ -201,19 +195,19 @@ function App() {
       .register(email, password)
       .then((res) => {
         if (res) {
-          setInfoPopupOpen(true);
           setIsReg(true);
           history.push("/sign-in");
         } else {
-          setInfoPopupOpen(true);
           setIsReg(false);
           console.log("else");
         }
       })
       .catch((err) => {
-        setInfoPopupOpen(true);
         console.log(`Ошибка входа ${err}`);
         setIsReg(false);
+      })
+      .finally(() => {
+        setInfoPopupOpen(true);
       });
   }
 
@@ -226,19 +220,24 @@ function App() {
   function handleTokenCheck() {
     const jwt = localStorage.getItem("jwt");
     if (jwt) {
-      auth.checkToken(jwt).then((res) => {
-        handleLogin();
-        history.push("/");
-        setEmail(res.data.email);
-      });
+      auth
+        .checkToken(jwt)
+        .then((res) => {
+          handleLogin();
+          history.push("/");
+          setEmail(res.data.email);
+        })
+        .catch((err) => console.log(err));
     }
   }
 
   return (
-    <CurrentUserContext.Provider value={currentUser}>
-      <body className="page">
+    <div className="page">
+      <CurrentUserContext.Provider value={currentUser}>
         <Header email={email} onExit={handleExit} />
+        
         <Switch>
+       
           <ProtectedRoute
             exact
             path="/"
@@ -262,7 +261,9 @@ function App() {
               onSubmit={handleRegistrSubmit}
             />
           </Route>
+          
         </Switch>
+       
         <InfoTooltip isOPen={isInfoPopupOpen} isReg={isReg} />
 
         {loggedIn && <Footer />}
@@ -296,8 +297,8 @@ function App() {
 
         {/* попап открытия картинки */}
         <ImagePopup selectedCard={selectedCard} onClose={closeAllPopups} />
-      </body>
-    </CurrentUserContext.Provider>
+      </CurrentUserContext.Provider>
+    </div>
   );
 }
 
