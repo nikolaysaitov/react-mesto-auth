@@ -8,8 +8,8 @@ function Header({ email, onExit }) {
       <div className="header__logo-link">
         <img className="header__logo" src={logo} alt="Логотип Место Россия" />
       </div>
-      <Switch>
-        <div className="header__content">
+      <div className="header__content">
+        <Switch>
           <Route exact path="/">
             <p className="header__email">{email}</p>
             <Link to="/sign-in" className="header__exit" onClick={onExit}>
@@ -27,8 +27,8 @@ function Header({ email, onExit }) {
               Войти
             </Link>
           </Route>
-        </div>
-      </Switch>
+        </Switch>
+      </div>
     </header>
   );
 }
